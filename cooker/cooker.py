@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 
 def debug(*args):
@@ -179,13 +179,14 @@ class Config:
 class BuildConfiguration:
     ALL = {}
 
-    def __init__(self, name, config, layers, local_conf, target, inherit):
+    def __init__(self, name, config, layers, local_conf, target, inherit, command = ""):
         self.name_ = name
         self.config_ = config
         self.layers_ = layers
         self.local_conf_ = local_conf
         self.target_ = target
         self.inherit_ = inherit
+        self.command_ = command
 
         self.parents_ = [] # first level parents
         self.ancestors_ = [] # all ancestors cleaned of duplicates
@@ -200,6 +201,8 @@ class BuildConfiguration:
     def name(self):
         return self.name_
 
+    def command(self):
+        return self.command_
 
     def dir(self):
         return self.config_.build_dir('build-' + self.name_)
@@ -517,9 +520,13 @@ class CookerCommands:
 
     def build_target(self, build, sdk):
         try:
-            info('Building {} ({})'.format(build.name(), build.target()))
+            info('Building {} ({}, {})'.format(build.name(), build.target(), build.command()))
 
-            self.run_bitbake(build, "", build.target())
+            command = ''
+            if build.command() != '':
+                command = '-c ' + build.command()
+
+            self.run_bitbake(build, command, build.target())
             if sdk:
                 self.run_bitbake(build, "-c populate_sdk", build.target())
 
@@ -712,7 +719,8 @@ class CookerCall:
                                    build.setdefault('layers', []),
                                    build.setdefault('local.conf', []),
                                    build.setdefault('target', None),
-                                   build.setdefault('inherit', [ 'root' ]))
+                                   build.setdefault('inherit', [ 'root' ]),
+                                   build.setdefault('command', ''))
 
             BuildConfiguration.resolve_parents()
 

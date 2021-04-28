@@ -99,6 +99,11 @@
                             "minLength": 1
                         },
 
+                        "command": {
+                            "type": "string",
+                            "minLength": 0
+                        },
+
                         "layers": {
                             "$ref": "#/definitions/layers"
                         },
